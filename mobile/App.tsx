@@ -228,10 +228,19 @@ export default function App() {
   ink.current = color;
   mode.current = tool;
   const canvasRef = useRef<any>(null);
+  const canvasOrigin = useRef({ x: 0, y: 0 });
   const pointFromEvent = (event: any) => {
     const native = event.nativeEvent || event;
     let x = Number(native.locationX);
     let y = Number(native.locationY);
+    if (
+      Platform.OS !== "web" &&
+      Number.isFinite(Number(native.pageX)) &&
+      Number.isFinite(Number(native.pageY))
+    ) {
+      x = Number(native.pageX) - canvasOrigin.current.x;
+      y = Number(native.pageY) - canvasOrigin.current.y;
+    }
     if (
       Platform.OS === "web" &&
       canvasRef.current?.getBoundingClientRect &&
@@ -469,6 +478,9 @@ export default function App() {
                 width: e.nativeEvent.layout.width,
                 height: e.nativeEvent.layout.height,
               };
+              canvasRef.current?.measureInWindow?.((x: number, y: number) => {
+                canvasOrigin.current = { x, y };
+              });
             }}
             style={{
               height: 300,
