@@ -1,0 +1,13 @@
+{
+  "name": "draw-the-imposter",
+  "private": true,
+  "workspaces": [
+    "server"
+  ],
+  "scripts": {
+    "server": "npm --workspace server start",
+    "simulate": "node scripts/simulate-players.mjs",
+    "test:server": "npm --workspace server test",
+    "start": "cd mobile && npx expo start"
+  }
+}

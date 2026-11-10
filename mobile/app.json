@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "Draw the Imposter",
+    "slug": "draw-the-imposter",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "android": {
+      "package": "com.drawtheimposter.game",
+      "versionCode": 6,
+      "permissions": ["INTERNET", "ACCESS_NETWORK_STATE"],
+      "usesCleartextTraffic": true
+    },
+    "plugins": ["./plugins/withCleartextTraffic"]
+  }
+}

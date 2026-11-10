@@ -1,0 +1,9 @@
+node_modules/
+.devhome/
+.expo/
+.buildtooling/
+.gradle-userhome/
+mobile/.expo/
+mobile/android/.gradle/
+mobile/android/build/
+mobile/android/app/build/
