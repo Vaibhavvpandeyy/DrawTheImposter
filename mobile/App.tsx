@@ -455,6 +455,9 @@ export default function App() {
               backgroundColor: "#fff",
               borderRadius: 12,
               overflow: "hidden",
+              ...(Platform.OS === "web"
+                ? ({ touchAction: "none", userSelect: "none" } as any)
+                : {}),
             }}
           >
             <Svg width="100%" height="100%" viewBox="0 0 300 300">
