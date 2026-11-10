@@ -110,7 +110,7 @@ export default function App() {
     if (!/^https?:\/\/[\w.:-]+$/.test(address))
       return Alert.alert(
         "Check the server address",
-        "Use your laptop Wi-Fi IPv4 address and port, such as http://192.168.1.25:3000",
+        "Enter the public game server URL, such as https://your-server.onrender.com",
       );
     setConnectionError("Connecting…");
     const s = io(address, {
@@ -200,7 +200,7 @@ export default function App() {
   const act = (event: string, data?: any) => {
     const liveSocket = activeSocket.current;
     if (!liveSocket?.connected) {
-      Alert.alert("Not connected", "Connect to your laptop server first.");
+      Alert.alert("Not connected", "Connect to the online game server first.");
       return;
     }
     liveSocket.emit(event, data);
@@ -369,7 +369,7 @@ export default function App() {
           <>
             {title(`ROOM ${room.code}`)}
             <Text style={{ color: C.muted }}>
-              Share this code with your friends on the same Wi-Fi.
+              Share this code with your friends anywhere.
             </Text>
           </>,
           { backgroundColor: "#ECE9FF", alignItems: "center", padding: 24 },
@@ -714,13 +714,13 @@ export default function App() {
           <>
             {title("Draw the Imposter")}
             {small(
-              "A party drawing game for 4–5 friends. Same Wi-Fi, same room.",
+              "A party drawing game for 4–5 friends. Play together from anywhere.",
             )}
           </>,
         )}
         {card(
           <>
-            {title("Connect to your laptop")}
+            {title("Connect to the game server")}
             {field(url, setUrl, "http://192.168.1.25:3000", {
               keyboardType: "url",
               autoCapitalize: "none",
@@ -733,8 +733,8 @@ export default function App() {
             )}
             {small(
               connected
-                ? "Connected over the local network."
-                : "Run the server on your laptop; enter its Wi-Fi IPv4 address above.",
+                ? "Connected to the online game server."
+                : "The server is hosted online, so players can use different networks.",
             )}
           </>,
         )}
