@@ -141,7 +141,13 @@ export default function App() {
         r ? { ...r, chat: [...r.chat, m].slice(-60) } : r,
       ),
     );
-    s.on("round:role", setRole);
+    s.on("round:role", (nextRole: any) =>
+      setRole((old: any) =>
+        nextRole?.results && old?.results
+          ? { ...old, ...nextRole, results: old.results }
+          : nextRole,
+      ),
+    );
     s.on("round:results", (r) => {
       setRole((old: any) => ({ ...old, results: r }));
       setVoted(false);
@@ -222,21 +228,42 @@ export default function App() {
   ink.current = color;
   mode.current = tool;
   const canvasRef = useRef<any>(null);
+  const pointFromEvent = (event: any) => {
+    const native = event.nativeEvent || event;
+    let x = Number(native.locationX);
+    let y = Number(native.locationY);
+    if (
+      Platform.OS === "web" &&
+      canvasRef.current?.getBoundingClientRect &&
+      Number.isFinite(Number(native.clientX ?? native.pageX))
+    ) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      x = Number(native.clientX ?? native.pageX) - rect.left;
+      y = Number(native.clientY ?? native.pageY) - rect.top;
+    }
+    return {
+      x: Math.max(0, Math.min(1, x / canvasSize.current.width)),
+      y: Math.max(0, Math.min(1, y / canvasSize.current.height)),
+    };
+  };
+  const finishCurrentStroke = () => {
+    if (!current.current) return;
+    const cur = current.current;
+    current.current = null;
+    act("canvas:stroke", { ...cur, points: [...cur.points] });
+  };
   const responder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => canDraw.current,
       onMoveShouldSetPanResponder: () => canDraw.current,
+      onPanResponderTerminationRequest: () => false,
       onPanResponderGrant: (e) => {
         if (!canDraw.current) return;
-        const { locationX: x, locationY: y } = e.nativeEvent;
+        finishCurrentStroke();
+        const point = pointFromEvent(e);
         current.current = {
           id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`,
-          points: [
-            {
-              x: Math.max(0, Math.min(1, x / canvasSize.current.width)),
-              y: Math.max(0, Math.min(1, y / canvasSize.current.height)),
-            },
-          ],
+          points: [point],
           width: 5,
           color: ink.current,
           tool: mode.current,
@@ -251,12 +278,8 @@ export default function App() {
       },
       onPanResponderMove: (e) => {
         if (!current.current) return;
-        const { locationX: x, locationY: y } = e.nativeEvent;
         const cur = current.current;
-        const nextPoint = {
-          x: Math.max(0, Math.min(1, x / canvasSize.current.width)),
-          y: Math.max(0, Math.min(1, y / canvasSize.current.height)),
-        };
+        const nextPoint = pointFromEvent(e);
         const previous = cur.points[cur.points.length - 1];
         if (
           Math.hypot(nextPoint.x - previous.x, nextPoint.y - previous.y) < 0.003
@@ -277,11 +300,9 @@ export default function App() {
         }
       },
       onPanResponderRelease: () => {
-        if (!current.current) return;
-        const cur = current.current;
-        current.current = null;
-        act("canvas:stroke", { ...cur, points: cur.points });
+        finishCurrentStroke();
       },
+      onPanResponderTerminate: () => finishCurrentStroke(),
     }),
   ).current;
   const btn = (
