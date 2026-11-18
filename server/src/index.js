@@ -851,6 +851,7 @@ io.on("connection", (s) => {
     }));
     const valid = {
       id: randomUUID(),
+      clientId: stroke.id,
       player: s.id,
       color: stroke.tool === "eraser" ? "#ffffff" : stroke.color,
       tool: stroke.tool,

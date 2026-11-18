@@ -40,6 +40,7 @@ function SmallText({
 }
 type Stroke = {
   id: string;
+  clientId?: string;
   player?: string;
   color: string;
   width: number;
@@ -160,7 +161,12 @@ export default function App() {
     });
     s.on("vote:locked", () => setVoted(true));
     s.on("canvas:stroke", (st: Stroke) => {
-      if (st.player === s.id) setPreviewStroke(null);
+      // Match the acknowledgement to its own local preview. Without this,
+      // the first stroke echo clears a newer stroke drawn immediately after it.
+      if (st.player === s.id && st.clientId)
+        setPreviewStroke((preview) =>
+          preview?.id === st.clientId ? null : preview,
+        );
       setRoom((r: Room | null) =>
         r
           ? {
