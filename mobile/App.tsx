@@ -79,7 +79,10 @@ export default function App() {
     [voted, setVoted] = useState(false),
     [myVote, setMyVote] = useState(""),
     [guess, setGuess] = useState("");
-  const [previewStroke, setPreviewStroke] = useState<Stroke | null>(null);
+  // Keep every locally pending stroke until the server acknowledges that
+  // specific stroke. A single preview slot makes stroke 2 disappear when
+  // stroke 3 starts before the network echo for stroke 2 arrives.
+  const [previewStrokes, setPreviewStrokes] = useState<Stroke[]>([]);
   const current = useRef<any>(null),
     canvasSize = useRef({ width: 300, height: 300 }),
     lastPreviewAt = useRef(0),
@@ -164,8 +167,8 @@ export default function App() {
       // Match the acknowledgement to its own local preview. Without this,
       // the first stroke echo clears a newer stroke drawn immediately after it.
       if (st.player === s.id && st.clientId)
-        setPreviewStroke((preview) =>
-          preview?.id === st.clientId ? null : preview,
+        setPreviewStrokes((previews) =>
+          previews.filter((preview) => preview.id !== st.clientId),
         );
       setRoom((r: Room | null) =>
         r
@@ -204,7 +207,7 @@ export default function App() {
     });
     s.on("app:error", (e: any) => Alert.alert("Game", e.message));
     s.on("room:joined", (r: Room) => {
-      setPreviewStroke(null);
+      setPreviewStrokes([]);
       setRoom({ ...r, canvas: r.canvas || [], previews: r.previews || [] });
     });
     setSocket(s);
@@ -288,7 +291,7 @@ export default function App() {
           ...current.current,
           player: activeSocket.current?.id,
         };
-        setPreviewStroke(preview);
+        setPreviewStrokes((previews) => [...previews, preview]);
         act("canvas:preview", preview);
       },
       onPanResponderMove: (e) => {
@@ -303,11 +306,17 @@ export default function App() {
         if (cur.points.length >= 100)
           cur.points[cur.points.length - 1] = nextPoint;
         else cur.points.push(nextPoint);
-        setPreviewStroke({
-          ...cur,
-          player: activeSocket.current?.id,
-          points: [...cur.points],
-        });
+        setPreviewStrokes((previews) =>
+          previews.map((preview) =>
+            preview.id === cur.id
+              ? {
+                  ...cur,
+                  player: activeSocket.current?.id,
+                  points: [...cur.points],
+                }
+              : preview,
+          ),
+        );
         const now = Date.now();
         if (now - lastPreviewAt.current >= 70) {
           lastPreviewAt.current = now;
@@ -519,7 +528,7 @@ export default function App() {
               ))}
               {[
                 ...room.previews,
-                ...(previewStroke ? [previewStroke] : []),
+                ...previewStrokes,
               ].map((s) => (
                 <Path
                   key={`${s.player || "local"}-${s.id}`}
